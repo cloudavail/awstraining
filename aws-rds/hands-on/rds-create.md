@@ -26,4 +26,4 @@ and confirm the result:
 
 ## Create the RDS Database
 
-aws rds create-db-instance --db-name $your_name --db-instance-identifier api-db-$your_name --allocated-storage 20 --db-instance-class db.t2.micro --engine mysql --master-username $your_name --master-user-password $your_name --vpc-security-group-ids $rds_security_group_id --db-subnet-group-name default --region $region
+`aws rds create-db-instance --db-name $your_name --db-instance-identifier api-db-$your_name --allocated-storage 20 --db-instance-class db.t2.micro --engine mysql --master-username $your_name --master-user-password $your_name --vpc-security-group-ids $rds_security_group_id --db-subnet-group-name default --region $region`

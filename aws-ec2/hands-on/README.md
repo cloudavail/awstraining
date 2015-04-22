@@ -2,9 +2,10 @@
 
 Contained with the hands-on labs for the aws-ec2 module are the following labs:
 
-## Infrastructure with Gateway and www Servers
-A diagram of the infrastructure is below:
-[![Simple Infrastructure Buildout](assets/aws-ec2-project-infrastructure-diagram.png)](#features)
+## Infrastructure with Gateway and www Server
+A diagram of the Gateway and www Server infrastructure is below:
+
+[![Gateway and WWW Infrastructure Buildout](assets/aws-ec2-project-infrastructure-diagram.png)](#features)
 
 If you wish to buildout the infrasture, you'll need to walk through the following guides:
 

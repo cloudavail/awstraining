@@ -4,8 +4,6 @@ set variables for future use:
 
 `region="us-west-2"`
 
-`availability_zone="us-west-2a"`
-
 `subnet_id="subnet-7a94061f"`
 
 # Create EC2 Instances using User-Data

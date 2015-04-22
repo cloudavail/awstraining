@@ -16,7 +16,7 @@
 
 ## Scale Down to 1 Instances
 
-`aws autoscaling update-auto-scaling-group --auto-scaling-group-name www-$your_name --min-size 1 --max-size 3 --desired-capacity 3 --region $region`
+`aws autoscaling update-auto-scaling-group --auto-scaling-group-name www-$your_name --min-size 1 --max-size 3 --desired-capacity 1 --region $region`
 
 ## Confirm that the www ELB has 1 Instance
 

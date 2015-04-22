@@ -1,8 +1,8 @@
-# Before You Begin
-
-## Set Additional Variables:
+# Prerequisites:
 
 Create and save a keypair. Make sure to set the permissions on this keypair to ready only: `chmod 400 ~/path/to/keypair.pem`. Set the `keypair_name` variable to the name of this keypair.
+
+# Set Required Variables:
 
 `key_name="cjohnson-test"`
 

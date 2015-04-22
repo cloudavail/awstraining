@@ -45,7 +45,7 @@ The command below will:
 5. Place this instance in the Subnet ID $subnet_id.
 6. Associate a Public IP Address - for now - a Public IP address is required for an instance to receive packets from Internet Gateway - we'll explore alternative options for Internet connectivity in other modules.
 
-`aws ec2 run-instances --image-id ami-5189a661 --region $region --instance-type t2.micro --security-group-id $test_security_group_id --subnet-id $subnet_id --associate-public-ip-address --key-pair $your_name --output table`
+`aws ec2 run-instances --image-id ami-5189a661 --region $region --instance-type t2.micro --security-group-id $test_security_group_id --subnet-id $subnet_id --associate-public-ip-address --key-name $your_name --output table`
 
 # SSH Into the Test Instance
 The last task that we will have in this lab is to log into the test-yourname instance that we have just created. In order to do this, we need the keypair that we have created as well as the Public IP address of the "Test" server that we had just made.

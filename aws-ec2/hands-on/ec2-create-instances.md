@@ -48,38 +48,3 @@ and confirm that the www Instance has been assigned an instance id:
 ## Tag the www EC2 Instance
 
 `aws ec2 create-tags --resources $www_instance_id --tags Key="Name",Value="www-$your_name" --region $region`
-
-# ssh to the www Instance
-Note: in broad strokes, here is what we are doing:
-
-1. adding the key to your SSH Forwarding Agent
-2. getting the IP addresses of both the gateway and www Server
-3. logging into the www Server by first sshing into gateway Server
-
-## Enable ssh Agent Forwarding of your new keypair:
-
-`ssh-add ~/path/to/keypair.pem`
-
-## Get Public IP Addresses of the Gateway Instance
-
-`gateway_public_ip=$(aws ec2 describe-instances --instance-id $gateway_instance_id --region $region --output text --query Reservations[*].Instances[*].PublicIpAddress)`
-
-and confirm the Gateway Server Public IP Address:
-
-`echo "The Public IP Address of the gateway EC2 Instance is: $gateway_public_ip."`
-
-## Get Private IP Addresses of the Gateway Instance
-
-`www_private_ip=$(aws ec2 describe-instances --instance-id $www_instance_id --region $region --output text --query Reservations[*].Instances[*].PrivateIpAddress)`
-
-and confirm the www Server Private IP Address:
-
-`echo "The Private IP Address of the www EC2 Instance is: $www_private_ip."`
-
-# Lastly, Login to the www Server
-
-`ssh -A -t ubuntu@$gateway_public_ip ssh -t ubuntu@$www_private_ip`
-
-# And Install Apache2 on the www Server
-
-`sudo apt-get -y install apache2`

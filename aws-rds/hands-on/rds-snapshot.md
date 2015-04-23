@@ -7,4 +7,3 @@
 # Create RDS Snapshot
 
 `aws rds create-db-snapshot --db-instance-identifier api-$your_name --db-snapshot-identifier $your_name-$date --region $region`
-

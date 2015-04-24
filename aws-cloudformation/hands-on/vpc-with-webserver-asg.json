@@ -31,7 +31,7 @@
     "AWSRegion2AZ" : {
       "us-east-1" : { "A" : "us-east-1b", "B" : "us-east-1c", "C" : "us-east-1d", "D" : "us-east-1d" },
       "us-west-1" : { "A" : "us-west-1a", "B" : "us-west-1b", "C" : "us-west-1c"  },
-      "us-west-1" : { "A" : "us-west-2a", "B" : "us-east-2b", "C" : "us-west-2c"  }
+      "us-west-2" : { "A" : "us-west-2a", "B" : "us-east-2b", "C" : "us-west-2c"  }
     }
   },
 

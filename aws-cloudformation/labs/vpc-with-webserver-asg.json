@@ -24,9 +24,9 @@
       "t2.small" : { "Arch" : "64" }
     },
     "AWSRegionArch2AMI" : {
-      "us-east-1" : { "64" : "ami-d05e75b8" },
-      "us-west-1" : { "64" : "ami-df6a8b9b" },
-      "us-west-2" : { "64" : "ami-5189a661" }
+      "us-east-1" : { "64" : "ami-7b89cc11" },
+      "us-west-1" : { "64" : "ami-809df3e0" },
+      "us-west-2" : { "64" : "ami-d24c5cb3" }
     },
     "AWSRegion2AZ" : {
       "us-east-1" : { "A" : "us-east-1b", "B" : "us-east-1c", "C" : "us-east-1d", "D" : "us-east-1d" },
@@ -114,6 +114,7 @@
             "Fn::Join": [ "",
               [
                 "#!/bin/bash -\n",
+                "apt-get -y update\n",
                 "apt-get -y install apache2\n",
                 "ami_id=$(curl --silent http://169.254.169.254/latest/meta-data/ami-id)\n",
                 "instance_id=$(curl --silent http://169.254.169.254/latest/meta-data/instance-id)\n",

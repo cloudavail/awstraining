@@ -1,0 +1,174 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Description: Create a VPC containing an Application Load Balancer Utilizing a Redirect
+
+Parameters:
+
+  HostedZoneId:
+    Type: AWS::Route53::HostedZone::Id
+    Default: Z088648313VJX789HYB7
+
+Resources:
+
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/24
+
+  PublicSubnet01:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Select [ 0, !GetAZs "" ]
+      CidrBlock: 10.0.0.0/25
+      VpcId: !Ref VPC
+
+  PublicSubnet02:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Select [ 1, !GetAZs "" ]
+      CidrBlock: 10.0.0.128/25
+      VpcId: !Ref VPC
+
+  PublicInternetRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+
+  PublicSubnet01RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicInternetRouteTable
+      SubnetId: !Ref PublicSubnet01
+
+  PublicSubnet02RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicInternetRouteTable
+      SubnetId: !Ref PublicSubnet02
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+
+  PublicInternetRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+      RouteTableId: !Ref PublicInternetRouteTable
+
+  VPCGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      InternetGatewayId: !Ref InternetGateway
+      VpcId: !Ref VPC
+
+  PrimarySiteLoadBalancerSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: primarysite-lb-sg
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 80
+        ToPort: 80
+        CidrIp: 0.0.0.0/0
+
+  PrimarySiteLoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: primarysite-lb
+      Scheme: internet-facing
+      SecurityGroups:
+        - !Ref PrimarySiteLoadBalancerSecurityGroup
+      Subnets:
+        - !Ref PublicSubnet01
+        - !Ref PublicSubnet02
+      Type: application
+
+  PrimarySiteLoadBalancerHTTPListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref PrimarySiteLoadBalancer
+      Protocol: HTTP
+      Port: 80
+      DefaultActions:
+        - Type: fixed-response
+          FixedResponseConfig:
+            ContentType: text/plain
+            MessageBody: Welcome to CloudAvail
+            StatusCode: 200
+
+  FailoverS3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      # note that for an "A Record" of "ALIAS" type to be used the bucket name
+      BucketName: www.sandbox.cloudavail.com
+      WebsiteConfiguration:
+        ErrorDocument: index.html
+        IndexDocument: index.html
+
+  PrimarySiteHealthCheck:
+    Type: AWS::Route53::HealthCheck
+    Properties:
+      HealthCheckConfig:
+        FailureThreshold: 1
+        FullyQualifiedDomainName: !GetAtt PrimarySiteLoadBalancer.DNSName
+        # note that an error occurs when a "basic" health check includes a InsufficientDataHealthStatus
+        # Invalid parameter : Basic health checks must not have an insufficient data health state specified
+        # InsufficientDataHealthStatus: Unhealthy
+        Port: 80
+        RequestInterval: 30
+        ResourcePath: /
+        Type: HTTP
+      HealthCheckTags:
+        - Key: Name
+          Value: primarysite-healthcheck
+
+  PrimarySiteRecordSet:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      AliasTarget:
+        DNSName: !GetAtt PrimarySiteLoadBalancer.DNSName
+        # EvaluateTargetHealth: true must be set or the following error is presented
+        # [RRSet with DNS name www.sandbox.cloudavail.com., type A, SetIdentifier primary cannot be a primary without
+        # EvaluateTargetHealth set to true or an associated health check as a secondary would never be returned.]
+        # note that we (CloudAvail) recommend setting EvaluateTargetHealth: true to false in almost all cases
+        # as a load balancer with _any_ backend target groups (not just target groups to which you are routing traffic)
+        # containing _no_ healthy targets is considered unhealthy  
+        # see https://docs.aws.amazon.com/Route53/latest/APIReference/API_AliasTarget.html
+        # and section EvaluateTargetHealth for more information
+        EvaluateTargetHealth: false
+        HostedZoneId: !GetAtt PrimarySiteLoadBalancer.CanonicalHostedZoneID
+      Failover: PRIMARY
+      HealthCheckId: !Ref PrimarySiteHealthCheck
+      HostedZoneId: !Ref HostedZoneId
+      Name: www.sandbox.cloudavail.com
+      # without SetIdentifier: primary
+      # the following error occurs:
+      # Invalid request: Missing field 'SetIdentifier' in Change with [Action=CREATE, Name=www.sandbox.cloudavail.com., Type=A, SetIdentifier=null] (Service: AmazonRoute53; Status Code: 400; Error Code: InvalidInput; Request ID: ad66d3e7-919b-4140-beda-646d172f7420; Proxy: null)
+      SetIdentifier: primary
+      Type: A
+
+  FailoverSiteRecordSet:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      # https://docs.aws.amazon.com/general/latest/gr/s3.html#s3_website_region_endpoints
+      AliasTarget:
+        DNSName: !Sub s3-website-${AWS::Region}.amazonaws.com
+        HostedZoneId: Z3BJ6K6RIION7M
+      Failover: SECONDARY
+      # we disable HealthCheckId
+      # HealthCheckId: String
+      HostedZoneId: !Ref HostedZoneId
+      Name: www.sandbox.cloudavail.com
+      # without SetIdentifier: primary
+      # the following error occurs:
+      # Invalid request: Missing field 'SetIdentifier' in Change with [Action=CREATE, Name=www.sandbox.cloudavail.com., Type=A, SetIdentifier=null] (Service: AmazonRoute53; Status Code: 400; Error Code: InvalidInput; Request ID: ad66d3e7-919b-4140-beda-646d172f7420; Proxy: null)
+      SetIdentifier: secondary
+      Type: A
+
+Outputs: {}
